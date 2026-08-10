@@ -30,7 +30,7 @@ logger = logging.getLogger("schemaguard")
 
 PORT = int(os.environ.get("PORT", "8000"))
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 DATAHUB_GMS_URL = os.environ.get("DATAHUB_GMS_URL", "")
 DATAHUB_TOKEN = os.environ.get("DATAHUB_TOKEN", "")
 DATA_REPO_NAME = os.environ.get("DATA_REPO_NAME", "")
@@ -239,8 +239,12 @@ def generate_dbt_fix(
     sql_path: str = "models/stg_users.sql",
     yaml_path: str = "models/schema.yml",
 ) -> DBTModelUpdate:
-    """Use GPT-4o with structured output to generate fixed dbt SQL and YAML."""
-    llm = ChatOpenAI(model="gpt-4o", temperature=0, api_key=OPENAI_API_KEY)
+    """Use Gemini with structured output to generate fixed dbt SQL and YAML."""
+    from langchain_google_genai import ChatGoogleGenAI
+    import os
+    
+    gemini_key = os.environ.get("GEMINI_API_KEY", "")
+    llm = ChatGoogleGenAI(model="gemini-1.5-flash", temperature=0, google_api_key=gemini_key)
     structured_llm = llm.with_structured_output(DBTModelUpdate)
 
     chain = DBT_FIX_PROMPT | structured_llm
@@ -345,8 +349,8 @@ def create_fix_pr(repo_full_name: str, pr_number: int, diff_text: str) -> None:
         logger.error("DATA_REPO_NAME is not configured; cannot create fix PR")
         return
 
-    if not OPENAI_API_KEY:
-        logger.error("OPENAI_API_KEY is not configured; cannot generate fix")
+    if not GEMINI_API_KEY:
+        logger.error("GEMINI_API_KEY is not configured; cannot generate fix")
         return
 
     table_name = extract_table_name_from_diff(diff_text)
