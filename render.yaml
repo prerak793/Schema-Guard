@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: schemaguard
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: DATAHUB_GMS_URL
+        sync: false
+      - key: DATAHUB_TOKEN
+        sync: false
+      - key: DATA_REPO_NAME
+        sync: false
