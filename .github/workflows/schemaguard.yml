@@ -22,7 +22,7 @@ jobs:
 
       - name: Run SchemaGuard CLI
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           DATA_REPO_NAME: ${{ secrets.DATA_REPO_NAME }}
           DATAHUB_GMS_URL: ${{ secrets.DATAHUB_GMS_URL }}
