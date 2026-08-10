@@ -17,7 +17,6 @@ from dotenv import load_dotenv
 from fastapi import BackgroundTasks, FastAPI, Request
 from github import Github, GithubException, InputGitTreeElement
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
 load_dotenv()
