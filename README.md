@@ -28,92 +28,24 @@ cp .env.example .env
 
 ---
 
-## Deploy on Koyeb (free — recommended)
+## Setup via GitHub Actions (Recommended — Zero Hosting Required!)
 
-[Koyeb](https://www.koyeb.com) offers a **permanent free tier**: 1 web service, 512 MB RAM, no credit card required.
+The easiest way to use SchemaGuard is to run it as a **GitHub Action** directly in your repository. This means you don't need to deploy any servers, manage webhooks, or pay for hosting.
 
-### 1. Create a free web service
+### 1. Add Secrets to your Repository
+Go to your database/schema repository on GitHub -> **Settings -> Secrets and variables -> Actions -> New repository secret**.
 
-1. Sign up at [koyeb.com](https://www.koyeb.com) (no credit card needed)
-2. Click **Create Web Service**
-3. Connect GitHub → select **prerak793/Schema-Guard**
-4. **Instance type:** choose **Free** (not Eco/Starter)
-5. **Build command:**
-   ```
-   pip install -r requirements.txt
-   ```
-6. **Run command:**
-   ```
-   uvicorn main:app --host 0.0.0.0 --port $PORT
-   ```
-7. **Port:** `8000` (Koyeb maps this automatically)
-8. **Health check:** `/health`
-9. Add environment variables:
-   - `GITHUB_TOKEN`
-   - `OPENAI_API_KEY`
-   - `DATA_REPO_NAME`
-   - `DATAHUB_GMS_URL` (optional)
-   - `DATAHUB_TOKEN` (optional)
-10. Click **Deploy**
+Add the following secrets:
+* `GITHUB_TOKEN`: A Personal Access Token (PAT) with `repo` scope to open the fix PR.
+* `OPENAI_API_KEY`: Your OpenAI API key for GPT-4o.
+* `DATA_REPO_NAME`: The name of your dbt data engineering repository (e.g., `prerak793/data-models`).
+* `DATAHUB_GMS_URL`: (Optional) Your DataHub GraphQL endpoint.
+* `DATAHUB_TOKEN`: (Optional) Your DataHub token.
 
-Your URL will look like:
+### 2. Copy the Workflow File
+In the repository where your database schema changes happen, create a new file at `.github/workflows/schemaguard.yml` and copy the workflow from this repository into it.
 
-```
-https://schemaguard-<your-org>.koyeb.app
-```
-
-Verify:
-
-```bash
-curl https://schemaguard-<your-org>.koyeb.app/health
-```
-
-### 2. Connect the GitHub webhook
-
-In your **schema-change repository** → **Settings → Webhooks → Add webhook**:
-
-| Field | Value |
-|-------|-------|
-| **Payload URL** | `https://schemaguard-<your-org>.koyeb.app/webhook` |
-| **Content type** | `application/json` |
-| **Events** | Pull requests |
-
-When a PR containing `ALTER TABLE` or `RENAME COLUMN` is opened or updated, SchemaGuard will:
-
-1. Fetch the PR diff
-2. Query DataHub for downstream dbt models (falls back to `stg_users` if unavailable)
-3. Use GPT-4o to generate updated SQL and schema YAML
-4. Open a fix PR in `DATA_REPO_NAME`
-
-> **Free tier note:** Koyeb scales to zero after ~1 hour of no traffic. The first webhook after idle may take a few seconds to cold-start. GitHub allows 10 seconds for webhook delivery, which is usually enough.
-
----
-
-## Deploy on Render (free, but pick the right plan)
-
-Render **does** have a free tier ($0/month), but the Blueprint flow often defaults to **Starter ($7/mo)**. You must explicitly choose **Free**.
-
-### Option A: Manual deploy (easier to stay free)
-
-1. [dashboard.render.com](https://dashboard.render.com) → **New → Web Service**
-2. Connect **prerak793/Schema-Guard**
-3. **Instance type:** select **Free** ($0) — not Starter
-4. **Build:** `pip install -r requirements.txt`
-5. **Start:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
-6. **Health check path:** `/health`
-7. Add env vars and deploy
-
-Webhook URL: `https://<service-name>.onrender.com/webhook`
-
-### Option B: Blueprint
-
-```
-https://dashboard.render.com/blueprint/new?repo=https://github.com/prerak793/Schema-Guard
-```
-
-The repo includes `render.yaml` with `plan: free`. **Before clicking Apply**, confirm each service shows **Free — $0/month**, not Starter ($7).
-
-> Render free services spin down after 15 min idle (~30–60s cold start).
+That's it! Now, whenever someone opens a Pull Request with a database change, GitHub Actions will spin up, analyze the diff, and open a fix PR in your data repository automatically.
 
 ---
 
